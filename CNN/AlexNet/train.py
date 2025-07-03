@@ -43,6 +43,7 @@ criterion=torch.nn.CrossEntropyLoss()
 optimizer=optim.SGD(model.parameters(),lr=0.01,momentum=0.5)
 
 def train(epoch):
+    model.train()
     running_loss=0.0
     for batch_index,(inputs,labels) in enumerate(train_loader,0):
         inputs,labels =inputs.to(device),labels.to(device)
@@ -54,7 +55,7 @@ def train(epoch):
         optimizer.step()
         running_loss += loss.item()
         
-        if batch_size % 10 == 9:
+        if batch_index % 10 == 9:
             print('[%d, %5d] loss: %.3f' % (epoch + 1, batch_index + 1, running_loss / 100))
 
 def test():

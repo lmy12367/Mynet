@@ -1,16 +1,15 @@
-from net import MyLenet
+from net import vgg
 import matplotlib.pyplot as plt
 import torch
 from torchvision import datasets,transforms
 from torch.utils.data import DataLoader
 import torch.nn.functional as F 
 import torch.optim as optim
-import os
 
-os.environ['KMP_DUPLICATE_LIB_OK']='True'
 
-batch_size=32
+batch_size=8
 transform=transforms.Compose([
+            transforms.Resize((224, 224)),
             transforms.ToTensor(),
             transforms.Normalize((0.1307),(0.3081))
 ])
@@ -33,18 +32,21 @@ test_loader = DataLoader(dataset=test_dataset,
                          shuffle=False,
                          batch_size=batch_size,
                          )
-model=MyLenet()
+
+conv_arch = ((1, 64), (1, 128), (2, 256), (2, 512), (2, 512))
+model = vgg(conv_arch)
 
 device=torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 model.to(device)
 
-criterion=torch.nn.CrossEntropyLoss()
-optimizer=optim.SGD(model.parameters(),lr=0.01,momentum=0.5)
+criterion = torch.nn.CrossEntropyLoss().to(device)
+optimizer=optim.SGD(model.parameters(),lr=0.1,momentum=0.5)
 
 def train(epoch):
     model.train()
     running_loss=0.0
     for batch_index,(inputs,labels) in enumerate(train_loader,0):
+        
         inputs,labels =inputs.to(device),labels.to(device)
         y_pred=model(inputs)
         loss=criterion(y_pred,labels)
@@ -54,8 +56,10 @@ def train(epoch):
         optimizer.step()
         running_loss += loss.item()
         
-        if batch_index % 10 == 9:
-            print('[%d, %5d] loss: %.3f' % (epoch + 1, batch_index + 1, running_loss / 100))
+        if batch_index % 100 == 99:
+            avg_loss = running_loss / 100
+            print(f'Epoch [{epoch+1}], Batch [{batch_index+1}], Loss: {avg_loss:.4f}')
+            running_loss = 0.0
 
 def test():
     model.eval()
@@ -74,14 +78,18 @@ def test():
     print(f'Test set: Average loss: {test_loss / len(test_loader):.4f}, Accuracy: {correct}/{len(test_loader.dataset)} ({accuracy:.2f}%)')
     return accuracy
 
-def save_model(model, filename="D:\code\dp\Review-DP\dpV2\CNN\LeNEt\model.pth"):
-    torch.save(model.state_dict(), filename)
+def save_model(model, filename="D:\code\dp\Review-DP\dpV2\CNN\VGG\model.pth"):
+    try:
+        torch.save(model.state_dict(), filename)
+        print(f"Model saved to {filename}")
+    except Exception as e:
+        print(f"Failed to save model: {e}")
 
 if __name__ == '__main__':
     epoch_list = []
     acc_list = []
 
-    for epoch in range(10):
+    for epoch in range(2):
         train(epoch)
         acc = test()
         epoch_list.append(epoch)
