@@ -9,7 +9,6 @@
 - **VGG**
 - **NiN** 
 - **GoogLeNet/Inception**
-- **SSD**
 
 每个网络均包含独立实现：
 - 📁 `net.py`：网络模型定义
