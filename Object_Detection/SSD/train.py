@@ -11,10 +11,10 @@ from torch.utils.data import Subset
 import matplotlib.pyplot as plt
 from net import TinySSD
 
-# 设备配置
+
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-# 数据集类
+
 class BananaDataset(Dataset):
     def __init__(self, data_dir, is_train=True, transform=None):
         self.data_dir = data_dir
@@ -38,12 +38,12 @@ class BananaDataset(Dataset):
         img_path = os.path.join(self.image_dir, img_name)
         img = Image.open(img_path).convert('RGB')
         
-        # 获取原始尺寸并归一化边界框
+        
         width, height = img.size
         bbox = self.labels.iloc[idx][['xmin', 'ymin', 'xmax', 'ymax']].values
         bbox = torch.tensor(bbox, dtype=torch.float32) / torch.tensor([width, height, width, height])
         
-        # 确保坐标在[0,1]范围内
+        
         bbox = torch.clamp(bbox, 0.0, 1.0)
         label = torch.tensor([1], dtype=torch.long)
         
@@ -52,7 +52,7 @@ class BananaDataset(Dataset):
             
         return img, torch.cat([label.float(), bbox]).unsqueeze(0)
 
-# 工具函数
+
 def offset_boxes(anchors, assigned_bb, eps=1e-6):
     c_anc = (anchors[:, 2:] + anchors[:, :2]) / 2
     c_assigned = (assigned_bb[:, 2:] + assigned_bb[:, :2]) / 2
@@ -60,7 +60,7 @@ def offset_boxes(anchors, assigned_bb, eps=1e-6):
     wh_anc = anchors[:, 2:] - anchors[:, :2] + eps
     wh_assigned = assigned_bb[:, 2:] - assigned_bb[:, :2] + eps
     
-    # 数值稳定的偏移量计算
+    
     offset_xy = 10 * (c_assigned - c_anc) / wh_anc
     offset_wh = 5 * torch.log(torch.clamp(wh_assigned / wh_anc, 1e-4, 1e4))
     
@@ -73,16 +73,16 @@ def multibox_target(anchors, labels):
     batch_offset, batch_mask, batch_class_labels = [], [], []
     
     for i in range(batch_size):
-        # 获取当前样本的锚框和真实框
-        sample_anchors = anchors[i].clone()  # [num_anchors, 4]
-        gt_boxes = labels[i][:, 1:5]  # [1, 4]
-        gt_labels = labels[i][:, 0].long()  # [1]
+       
+        sample_anchors = anchors[i].clone() 
+        gt_boxes = labels[i][:, 1:5]  
+        gt_labels = labels[i][:, 0].long() 
         
-        # 确保坐标有效性
+        
         sample_anchors = torch.clamp(sample_anchors, 0.0, 1.0)
         gt_boxes = torch.clamp(gt_boxes, 0.0, 1.0)
         
-        # 计算IoU
+        
         inter_xmin = torch.max(sample_anchors[:, 0], gt_boxes[0, 0])
         inter_ymin = torch.max(sample_anchors[:, 1], gt_boxes[0, 1])
         inter_xmax = torch.min(sample_anchors[:, 2], gt_boxes[0, 2])
@@ -94,7 +94,7 @@ def multibox_target(anchors, labels):
         
         iou = inter_area / (anchors_area + gt_area - inter_area + 1e-6)
         
-        # 分配标签
+        
         pos_mask = iou >= 0.5
         assigned_labels = torch.zeros(num_anchors, dtype=torch.long, device=device)
         assigned_boxes = torch.zeros_like(sample_anchors)
@@ -102,7 +102,7 @@ def multibox_target(anchors, labels):
         assigned_labels[pos_mask] = gt_labels[0]
         assigned_boxes[pos_mask] = gt_boxes[0]
         
-        # 计算偏移量
+        
         offsets = offset_boxes(sample_anchors, assigned_boxes) * pos_mask.unsqueeze(1).float()
         
         batch_offset.append(offsets)
@@ -113,7 +113,7 @@ def multibox_target(anchors, labels):
             torch.stack(batch_mask),
             torch.stack(batch_class_labels))
 
-# 评估函数
+
 def cls_eval(cls_preds, cls_labels):
     return float((cls_preds.argmax(dim=-1).type(cls_labels.dtype) == cls_labels).sum())
 
@@ -122,43 +122,43 @@ def bbox_eval(bbox_preds, bbox_labels, bbox_masks):
     bbox_masks = bbox_masks.unsqueeze(-1)
     return float(torch.abs((bbox_labels - bbox_preds) * bbox_masks).sum())
 
-# 损失函数
+
 class MultiBoxLoss(nn.Module):
     def __init__(self):
         super().__init__()
         self.cls_loss = nn.CrossEntropyLoss(reduction='none')
-        self.bbox_loss = nn.SmoothL1Loss(reduction='none')  # 更稳定的损失函数
+        self.bbox_loss = nn.SmoothL1Loss(reduction='none')  
     
     def forward(self, cls_preds, cls_labels, bbox_preds, bbox_labels, bbox_masks):
-        # 分类损失
+        
         cls = self.cls_loss(
             cls_preds.reshape(-1, cls_preds.shape[-1]),
             cls_labels.reshape(-1)
         ).reshape(cls_labels.shape[0], -1).mean(dim=1)
         
-        # 边界框损失
+       
         bbox = self.bbox_loss(
             bbox_preds.reshape(bbox_labels.shape) * bbox_masks.unsqueeze(-1),
             bbox_labels * bbox_masks.unsqueeze(-1)
         ).mean(dim=[1, 2])
         
-        # 数值检查
+        
         if torch.isnan(cls).any() or torch.isnan(bbox).any():
             print("警告: 检测到NaN值!")
             return torch.tensor(0.0, requires_grad=True)
         
         return (cls + bbox).mean()
 
-# 训练函数
+
 def train(net, train_loader, val_loader, num_epochs=20, lr=1e-3):
     net.to(device)
     optimizer = optim.Adam(net.parameters(), lr=lr, weight_decay=5e-4)
     criterion = MultiBoxLoss()
     
-    # 学习率调度器
+    
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', patience=2)
     
-    # 训练循环
+    
     for epoch in range(num_epochs):
         net.train()
         train_metrics = [0.0] * 4
@@ -166,26 +166,26 @@ def train(net, train_loader, val_loader, num_epochs=20, lr=1e-3):
         for images, targets in train_loader:
             images, targets = images.to(device), targets.to(device)
             
-            # 前向传播
+            
             anchors, cls_preds, bbox_preds = net(images)
             bbox_labels, bbox_masks, cls_labels = multibox_target(anchors, targets)
             
-            # 计算损失
+            
             loss = criterion(cls_preds, cls_labels, bbox_preds, bbox_labels, bbox_masks)
             
-            # 反向传播
+            
             optimizer.zero_grad()
             loss.backward()
             torch.nn.utils.clip_grad_norm_(net.parameters(), 1.0)
             optimizer.step()
             
-            # 更新指标
+            
             train_metrics[0] += cls_eval(cls_preds, cls_labels)
             train_metrics[1] += cls_labels.numel()
             train_metrics[2] += bbox_eval(bbox_preds, bbox_labels, bbox_masks)
             train_metrics[3] += bbox_labels.numel()
         
-        # 验证阶段
+        
         net.eval()
         val_metrics = [0.0] * 4
         val_loss = 0.0
@@ -205,7 +205,7 @@ def train(net, train_loader, val_loader, num_epochs=20, lr=1e-3):
                 val_metrics[2] += bbox_eval(bbox_preds, bbox_labels, bbox_masks)
                 val_metrics[3] += bbox_labels.numel()
         
-        # 计算指标
+        
         train_loss = loss.item()
         train_cls_err = 1 - train_metrics[0] / train_metrics[1]
         train_bbox_mae = train_metrics[2] / train_metrics[3]
@@ -213,18 +213,18 @@ def train(net, train_loader, val_loader, num_epochs=20, lr=1e-3):
         val_cls_err = 1 - val_metrics[0] / val_metrics[1]
         val_bbox_mae = val_metrics[2] / val_metrics[3]
         
-        # 打印结果
+        
         print(f"\nEpoch {epoch+1}/{num_epochs}")
         print(f"Train - Loss: {train_loss:.4f}, ClsErr: {train_cls_err:.4f}, BboxMAE: {train_bbox_mae:.4f}")
         print(f"Val - Loss: {val_loss/len(val_loader):.4f}, ClsErr: {val_cls_err:.4f}, BboxMAE: {val_bbox_mae:.4f}")
         
-        # 调整学习率
+        
         scheduler.step(val_loss)
     
     torch.save(net.state_dict(), 'ssd_model.pth')
     print("训练完成，模型已保存")
 
-# 数据增强
+
 def get_transform(train=True):
     transform = [
         transforms.Resize((256, 256)),
@@ -235,17 +235,17 @@ def get_transform(train=True):
         transform.insert(1, transforms.RandomHorizontalFlip(0.5))
     return transforms.Compose(transform)
 
-# 主函数
+
 if __name__ == "__main__":
-    # 初始化网络
+    
     net = TinySSD(num_classes=1)
     
-    # 加载数据
-    data_dir = 'D:\\code\\document\\data\\banana-detection'  # 替换为你的实际路径
+    
+    data_dir = 'D:\\code\\document\\data\\banana-detection'  
     train_dataset = BananaDataset(data_dir, is_train=True, transform=get_transform(True))
     val_dataset = BananaDataset(data_dir, is_train=False, transform=get_transform(False))
     
-    # 创建数据加载器（修正后的版本）
+    
     train_loader = DataLoader(
         Subset(train_dataset, range(min(512, len(train_dataset)))),
         batch_size=64,
@@ -259,6 +259,6 @@ if __name__ == "__main__":
         num_workers=4
     )
     
-    # 开始训练
+    
     print(f"训练样本: {len(train_loader.dataset)}, 验证样本: {len(val_loader.dataset)}")
     train(net, train_loader, val_loader, num_epochs=5)
