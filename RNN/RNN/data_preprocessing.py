@@ -4,10 +4,10 @@ import os
 import requests
 import torch
 
-# 下载数据集
+
 def download_time_machine():
     url = 'https://raw.githubusercontent.com/d2l-ai/d2l-en/master/data/timemachine.txt'
-    save_path = 'D:\\code\\document\\data\\timemachine.txt'
+    save_path = './timemachine.txt'
     
     if not os.path.exists(save_path):
         print("Downloading dataset...")
@@ -17,14 +17,14 @@ def download_time_machine():
     return save_path
 
 def read_time_machine():
-    """将时间机器数据集加载到文本行的列表中"""
+    
     file_path = download_time_machine()
     with open(file_path, 'r') as f:
         lines = f.readlines()
     return [re.sub('[^A-Za-z]+', ' ', line).strip().lower() for line in lines]
 
 def tokenize(lines, token='word'):
-    """将文本行拆分为单词或字符词元"""
+    
     if token == 'word':
         return [line.split() for line in lines]
     elif token == 'char':
@@ -33,7 +33,7 @@ def tokenize(lines, token='word'):
         raise ValueError('未知词元类型: ' + token)
 
 class Vocab:
-    """文本词表"""
+    
     def __init__(self, tokens=None, min_freq=0, reserved_tokens=None):
         if tokens is None:
             tokens = []
@@ -75,13 +75,13 @@ class Vocab:
 
     @staticmethod
     def count_corpus(tokens):
-        """统计词元的频率"""
+        
         if len(tokens) == 0 or isinstance(tokens[0], list):
             tokens = [token for line in tokens for token in line]
         return collections.Counter(tokens)
 
 def load_corpus_time_machine(max_tokens=-1, token='char'):
-    """返回时光机器数据集的词元索引列表和词表"""
+    
     lines = read_time_machine()
     tokens = tokenize(lines, token)
     vocab = Vocab(tokens)
@@ -91,7 +91,7 @@ def load_corpus_time_machine(max_tokens=-1, token='char'):
     return corpus, vocab
 
 def seq_data_iter_random(corpus, batch_size, num_steps):
-    """随机采样生成小批量数据"""
+    
     corpus = corpus[torch.randint(0, num_steps - 1, (1,)).item():]
     num_subseqs = (len(corpus) - 1) // num_steps
     initial_indices = list(range(0, num_subseqs * num_steps, num_steps))
@@ -106,7 +106,7 @@ def seq_data_iter_random(corpus, batch_size, num_steps):
         yield torch.tensor(X), torch.tensor(Y)
 
 def seq_data_iter_sequential(corpus, batch_size, num_steps):
-    """顺序分区生成小批量数据"""
+    
     offset = torch.randint(0, num_steps, (1,)).item()
     num_tokens = ((len(corpus) - offset - 1) // batch_size) * batch_size
     Xs = torch.tensor(corpus[offset:offset+num_tokens])
@@ -119,7 +119,7 @@ def seq_data_iter_sequential(corpus, batch_size, num_steps):
         yield X, Y
 
 class SeqDataLoader:
-    """序列数据加载器"""
+    
     def __init__(self, batch_size, num_steps, use_random_iter=False, max_tokens=10000, token='char'):
         self.corpus, self.vocab = load_corpus_time_machine(max_tokens, token)
         self.batch_size = batch_size

@@ -22,14 +22,14 @@ def grad_clipping(net, theta):
 def train_epoch(net, train_iter, loss, updater, device, use_random_iter):
     """训练一个epoch"""
     state, timer = None, time.time()
-    metric = [0.0, 0]  # 训练损失之和, 词元数量
+    metric = [0.0, 0]  
     
     for X, Y in train_iter:
         if state is None or use_random_iter:
-            # 在第一次迭代或使用随机抽样时初始化state
+            
             state = net.begin_state(batch_size=X.shape[0], device=device)
         else:
-            # 对于自定义模型，断开状态与计算图的连接
+            
             state = [s.detach() for s in state] if isinstance(state, list) else state.detach()
         
         X, Y = X.to(device), Y.to(device)
@@ -45,7 +45,7 @@ def train_epoch(net, train_iter, loss, updater, device, use_random_iter):
         else:
             l.backward()
             grad_clipping(net, 1)
-            # 因为已经调用了mean函数
+            
             updater(batch_size=1)
         
         metric[0] += l.item() * y.numel()
@@ -54,8 +54,7 @@ def train_epoch(net, train_iter, loss, updater, device, use_random_iter):
     return math.exp(metric[0] / metric[1]), metric[1] / (time.time() - timer)
 
 def train_rnn():
-    """训练RNN模型"""
-    # 配置参数
+    
     batch_size, num_steps = 32, 35
     num_hiddens = 256
     lr = 1
@@ -65,26 +64,26 @@ def train_rnn():
     
     print(f"使用设备: {device}")
     
-    # 加载数据
+    
     data_iter = SeqDataLoader(batch_size, num_steps, use_random_iter, max_tokens=10000)
     vocab = data_iter.vocab
     
-    # 初始化模型
+    
     net = RNNModelScratch(
         len(vocab), num_hiddens, device, get_params, init_rnn_state, rnn)
     
-    # 转移模型到设备
+    
     net.to(device)
     
-    # 打印模型信息
+    
     total_params = sum(p.numel() for p in net.parameters())
     print(f"模型参数总数: {total_params:,}")
     
-    # 损失函数和优化器
+    
     loss = nn.CrossEntropyLoss()
     updater = torch.optim.SGD(net.parameters(), lr)
     
-    # 训练循环
+    
     perplexities = []
     for epoch in range(num_epochs):
         ppl, speed = train_epoch(
@@ -94,10 +93,10 @@ def train_rnn():
             print(f'Epoch {epoch+1}, Perplexity: {ppl:.1f}, Speed: {speed:.1f} tokens/sec')
             perplexities.append(ppl)
     
-    # 保存模型
-    model_dir = "models"
+    
+    model_dir = "./"
     os.makedirs(model_dir, exist_ok=True)
-    model_path = os.path.join(model_dir, "D:\\code\\dp\\Review-DP\\dpV2\\RNN\\rnn_model.pth")
+    model_path = os.path.join(model_dir, "rnn_model.pth")
     
     torch.save({
         'model_state_dict': net.state_dict(),
@@ -108,7 +107,7 @@ def train_rnn():
     
     print(f"模型已保存至: {model_path}")
     
-    # 绘制困惑度曲线
+    
     plt.figure(figsize=(10, 6))
     plt.plot(range(10, num_epochs+1, 10), perplexities, 'o-')
     plt.xlabel('Epoch')
