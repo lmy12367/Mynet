@@ -5,7 +5,7 @@ from net import MyLenet
 
 def load_model(device):
     model = MyLenet()
-    model.load_state_dict(torch.load('D:\\code\\dp\\Review-DP\\dpV2\\CNN\\LeNEt\\model.pth'))
+    model.load_state_dict(torch.load('./data/model.pth'))
     model.to(device)
     model.eval()
     return model
@@ -29,7 +29,7 @@ if __name__ == "__main__":
     model = load_model(device)
 
     test_dataset = datasets.MNIST(
-        root="D:\\code\\document\\data\\\mnist",
+        root="./data/mnist",
         train=False,
         download=False,
         transform=transforms.Compose([

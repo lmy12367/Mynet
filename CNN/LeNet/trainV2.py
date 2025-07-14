@@ -13,7 +13,7 @@ os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 BATCH_SIZE = 32
 EPOCHS = 10
 LR = 0.001                       
-SAVE_PATH = 'D:\code\dp\Mynet\CNN\LeNet\saved_models\lenet_cifar10_small.pth'
+SAVE_PATH = './model/lenet_cifar10_small.pth'
 DEVICE = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
 transform = transforms.Compose([
@@ -22,9 +22,9 @@ transform = transforms.Compose([
                          (0.5, 0.5, 0.5))
 ])
 
-full_train = torchvision.datasets.CIFAR10(root='D:\\code\\document\\data', train=True,
+full_train = torchvision.datasets.CIFAR10(root='./data', train=True,
                                           download=False, transform=transform)
-full_test  = torchvision.datasets.CIFAR10(root='D:\\code\\document\\data', train=False,
+full_test  = torchvision.datasets.CIFAR10(root='./data', train=False,
                                           download=False, transform=transform)
 
 train_subset = Subset(full_train, indices=range(1000))
