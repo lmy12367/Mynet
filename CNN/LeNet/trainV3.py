@@ -11,13 +11,13 @@ import gc
 
 class TrainingConfig:
     def __init__(self):
-        self.data_root = Path("./data/data")
+        self.data_root = Path("./data")
         self.batch_size = 64
         self.num_workers = 4
-        self.epochs = 20
+        self.epochs = 10
         self.lr = 0.001
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        self.save_dir = Path("./saved_models")
+        self.save_dir = Path("./models/")
         self.save_dir.mkdir(parents=True, exist_ok=True)
         self.log_file = Path("./logs/training.log")
         self.log_file.parent.mkdir(parents=True, exist_ok=True)

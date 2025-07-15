@@ -15,7 +15,7 @@ transform=transforms.Compose([
             transforms.Normalize((0.1307),(0.3081))
 ])
 train_dataset=datasets.MNIST(
-    root="D:\\code\\document\\data\\mnist",
+    root="./data/mnist",
     train=True,
     download=False,
     transform=transform
@@ -24,7 +24,7 @@ train_loader=DataLoader(dataset=train_dataset,
                         shuffle=True,
                         batch_size=batch_size)
 test_dataset = datasets.MNIST(
-                            root='D:\\code\\document\\data\\\mnist',
+                            root='./data/mnist',
                             train=False,
                             download=False,
                             transform=transform)
@@ -74,7 +74,7 @@ def test():
     print(f'Test set: Average loss: {test_loss / len(test_loader):.4f}, Accuracy: {correct}/{len(test_loader.dataset)} ({accuracy:.2f}%)')
     return accuracy
 
-def save_model(model, filename="D:\code\dp\Review-DP\dpV2\CNN\LeNEt\model.pth"):
+def save_model(model, filename="./models/model.pth"):
     torch.save(model.state_dict(), filename)
 
 if __name__ == '__main__':

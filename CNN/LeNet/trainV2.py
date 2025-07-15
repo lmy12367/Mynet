@@ -13,7 +13,7 @@ os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 BATCH_SIZE = 32
 EPOCHS = 10
 LR = 0.001                       
-SAVE_PATH = './model/lenet_cifar10_small.pth'
+SAVE_PATH = './models/lenet_cifar10_small.pth'
 DEVICE = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
 transform = transforms.Compose([
