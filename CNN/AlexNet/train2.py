@@ -84,6 +84,12 @@ def save_model(model, filename="./models/flower/flower_classifier.pth"):
     os.makedirs(os.path.dirname(filename), exist_ok=True)   
     torch.save(model.state_dict(), filename)
 
+flower_list = train_dataset.class_to_idx
+cla_dict = dict((val, key) for key, val in flower_list.items())
+json_str = json.dumps(cla_dict, indent=4)
+with open('class_indices.json', 'w') as json_file:
+    json_file.write(json_str)
+
 if __name__ == '__main__':
     acc_history = []
     for epoch in range(10): 
