@@ -23,8 +23,10 @@ def channel_shuffle(x: torch.Tensor, groups: int) -> torch.Tensor:
     x = x.view(B, -1, H, W)
     return x
 
-if __name__=="__main__":
-    net=ShuffleNetV2()
-    x=torch.randn(1,3,224,224)
-    y=net(x)
-    print(y.shape)
+
+
+if __name__ == "__main__":
+    x = torch.randn(1, 8, 4, 4)
+    y = channel_shuffle(x, 2)      # 2 组
+    print("洗牌前:", x[0, :, 0, 0])
+    print("洗牌后:", y[0, :, 0, 0])
