@@ -36,7 +36,73 @@ def channel_shuffle(input_tensor:torch.Tensor,groups:int)->torch.Tensor:
 
     return shuffled_tensor
 
+class InvertedResidual(nn.Module):
+    def __init__(self,
+                input_channels:int,
+                output_channels:int,
+                stride:int):
+        super().__init__()
+        self.stride=stride
+        assert stride in [1,2]
+        branch_features=output_channels//2
 
+        assert(stride!=1)or(input_channels==branch_features*2)
+
+        if stride==2:
+            self.branch1=nn.Sequential(
+                nn.Conv2d(input_channels,
+                          input_channels,
+                          kernel_size=3,
+                          stride=stride,
+                          padding=1,
+                          groups=input_channels,
+                          bias=False),
+                nn.BatchNorm2d(input_channels),
+                nn.ReLU()
+            )
+        else:
+            self.branch1=nn.Identity()
+
+        self.branch2=nn.Sequential(
+            nn.Conv2d(input_channels if stride>1 else branch_features,
+                      branch_features,
+                      kernel_size=1,
+                      stride=1,
+                      padding=0,
+                      bias=False),
+            nn.BatchNorm2d(branch_features),
+            nn.ReLU(),
+            nn.Conv2d(branch_features,
+                      branch_features,
+                      kernel_size=3,
+                      stride=stride,
+                      padding=1,
+                      groups=branch_features,
+                      bias=False),
+            nn.BatchNorm2d(branch_features),
+            nn.Conv2d(branch_features,
+                      branch_features,
+                      kernel_size=1,
+                      stride=1,
+                      padding=0,
+                      bias=False),
+            nn.BatchNorm2d(branch_features),
+            nn.ReLU()
+        )
+    
+    def forward(self,input_feature_map:torch.Tensor):
+        if self.stride==1:
+            branch_left,branch_right=input_feature_map.chunk(2,dim=1)
+            output_feature_map=torch.cat(
+                (branch_left,self.branch2(branch_right)),dim=1
+            )
+        else:
+            output_feature_map=torch.cat(
+                (self.branch1(input_feature_map),
+                 self.branch2(input_feature_map)),dim=1
+            )
+    
+        return channel_shuffle(output_feature_map,2)
 
 
 if __name__ == "__main__":
@@ -45,3 +111,17 @@ if __name__ == "__main__":
     print("原始通道顺序:", demo_tensor[0, :, 0, 0])
     shuffled = channel_shuffle(demo_tensor, groups=4)
     print("洗牌后顺序:", shuffled[0, :, 0, 0])
+
+    downsample_unit=InvertedResidual(input_channels=24,
+                                     output_channels=48,
+                                     stride=2)
+    x=torch.randn(1,24,56,56)
+    y=downsample_unit(x)
+
+    print(y.shape)
+
+    identity_unit=InvertedResidual(input_channels=48,
+                                   output_channels=48,
+                                   stride=1)
+    y2=identity_unit(y)
+    print(y2.shape)
