@@ -7,8 +7,28 @@ import torch.nn as nn
 from typing import List
 
 class ShuffleNetV2(nn.Module):
-    def __init__(self):
+    def __init__(self,
+                stage_repeats:List[int],
+                stage_out_channels:List[int],
+                num_classes:int=1000):
         super().__init__()
+
+        assert len(stage_repeats)==3,"stages_repeats 必须是 3 个整数"
+        assert len(stage_out_channels)==5,"stages_out_channels 必须是 5 个整数"
+
+        self.conv1=nn.Sequential(
+            nn.Conv2d(in_channels=3,
+                    out_channels=stage_out_channels[0],
+                    kernel_size=3,
+                    stride=2,
+                    padding=1,
+                    bias=False),
+            nn.BatchNorm2d(stage_out_channels[0]),
+            nn.ReLU()
+        )
+        self.maxpool=nn.MaxPool2d(kernel_size=3,
+                                stride=2,
+                                padding=1)
 
     def forward(self,x):
         return x
