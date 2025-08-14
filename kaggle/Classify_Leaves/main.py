@@ -64,6 +64,12 @@ train_ds, val_ds = random_split(train_set, [train_len, val_len],
 
 train_loader = DataLoader(train_ds, BATCH_SIZE, shuffle=True,  num_workers=2)
 val_loader   = DataLoader(val_ds,   BATCH_SIZE, shuffle=False, num_workers=2)
+test_set = LeafDataset(os.path.join(ROOT, 'test.csv'),
+                       transform=test_tf,
+                       is_train=False)
+test_loader = DataLoader(test_set, BATCH_SIZE,
+                         shuffle=False, num_workers=2)
+
 
 model = resnet50(weights='IMAGENET1K_V1')
 model.fc = nn.Linear(model.fc.in_features, num_classes)
@@ -96,16 +102,9 @@ for epoch in range(1, EPOCHS + 1):
           f'Train Loss {tr_loss:.4f} Acc {tr_acc:.4f}  |  '
           f'Val Loss {val_loss:.4f} Acc {val_acc:.4f}')
 
-model.eval()
-test_set = LeafDataset(os.path.join(ROOT, 'test.csv'),
-                       transform=test_tf,
-                       is_train=False)
-test_loader = DataLoader(test_set, BATCH_SIZE, shuffle=False, num_workers=2)
-
-with open(os.path.join(ROOT, 'label2idx.json')) as f:
-    idx2cls = {int(v): k for k, v in json.load(f).items()}
-
+idx2cls = {i: cls for i, cls in enumerate(train_set.le.classes_)}
 preds = []
+model.eval()
 with torch.no_grad():
     for x in test_loader:
         x = x.to(DEVICE)
@@ -115,4 +114,4 @@ with torch.no_grad():
 sub = pd.read_csv(os.path.join(ROOT, 'test.csv'))
 sub['label'] = [idx2cls[p] for p in preds]
 sub[['image', 'label']].to_csv('submission.csv', index=False)
-print('submission.csv 已生成，可直接上传 Kaggle！')
+print('✅ submission.csv 已生成')
