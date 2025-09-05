@@ -35,3 +35,16 @@ def data_loader(features,labels,batch_size,shuffle=True):
         yield features[idx],labels[idx]
 
 train_iter = data_loader(features[:n_train], labels[:n_train], batch_size)
+
+def init_weights(m):
+    if isinstance(m,nn.Linear):
+        nn.init.xavier_uniform_(m.weight)
+
+def get_net():
+    net=nn.Sequential(
+        nn.Linear(4,10),
+        nn.ReLU(),
+        nn.Linear(10,1)
+    )
+    net.apply(init_weights)
+    return net
