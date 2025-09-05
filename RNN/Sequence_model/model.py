@@ -23,3 +23,15 @@ for i in range(tau):
 labels=x[tau:].reshape((-1,1))
 print("features形状:", features.shape)  
 print("labels形状:", labels.shape)    
+
+batch_size=16
+n_train=600
+
+def data_loader(features,labels,batch_size,shuffle=True):
+    indics=torch.randperm(len(features)) if shuffle else torch.arange(len(features))
+    
+    for i in range(0,len(features),batch_size):
+        idx=indics[i:i+batch_size]
+        yield features[idx],labels[idx]
+
+train_iter = data_loader(features[:n_train], labels[:n_train], batch_size)
