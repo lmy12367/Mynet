@@ -48,3 +48,27 @@ def get_net():
     )
     net.apply(init_weights)
     return net
+
+loss=nn.MSELoss()
+def train(net, features, labels, batch_size, epochs, lr):
+    optimizer = torch.optim.Adam(net.parameters(), lr=lr)
+    
+    for epoch in range(epochs):
+        train_iter=data_loader(features, labels, batch_size, shuffle=True)
+        total_loss=0
+        count=0
+
+        for X, y in train_iter:
+            optimizer.zero_grad()
+            output=net(X)
+            l=loss(output, y)
+            l.backward()
+            optimizer.step()
+            total_loss += l.item() * len(X)
+            count += len(X)
+        
+        print(f"Epoch {epoch+1}, Loss: {total_loss/count:.4f}")
+
+
+net = get_net()
+train(net, features[:n_train], labels[:n_train], batch_size, 5, 0.01)
