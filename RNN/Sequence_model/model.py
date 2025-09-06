@@ -72,3 +72,15 @@ def train(net, features, labels, batch_size, epochs, lr):
 
 net = get_net()
 train(net, features[:n_train], labels[:n_train], batch_size, 5, 0.01)
+
+with torch.no_grad():
+    test_iter=data_loader(features[n_train:],labels[n_train:],batch_size,shuffle=False)
+    test_loss=0
+    test_count=0
+
+    for X,y in test_iter:
+        output=net(X)
+        test_loss+=loss(output,y).item()*len(X)
+        test_count+=len (X)
+
+    print(f"Test Loss: {test_loss/test_count:.4f}")
