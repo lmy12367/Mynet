@@ -29,3 +29,12 @@ def tokenize(lines,token='word'):
 tokens=tokenize(lines)
 for i in range(11):
     print(tokens[i])
+
+def count_corpus(tokens):
+    if len(tokens)==0 or isinstance(tokens[0],list):
+        tokens=[token for line in tokens for token in line]
+    
+    return collections.Counter(tokens)
+
+test_tokens = [['hello', 'world'], ['hello', 'python']]
+print(count_corpus(test_tokens))
