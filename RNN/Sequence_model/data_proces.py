@@ -16,4 +16,16 @@ lines=read_time_machine()
 print("total",(len(lines)))
 print("first",lines[0])
 
-def tokenize(lines,token)
+def tokenize(lines,token='word'):
+    if token=='word':
+        return [line.split() for line in lines]
+    
+    elif token=='char':
+        return [list(line) for line in lines]
+    
+    else:
+        print('erro'+token)
+
+tokens=tokenize(lines)
+for i in range(11):
+    print(tokens[i])
