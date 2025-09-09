@@ -1,7 +1,9 @@
 import re,collections,os,urllib.request
 
+from Vocab import Vocab
+
 URL='https://d2l-data.s3-accelerate.amazonaws.com/timemachine.txt'
-File='./dp/Mynet\RNN/Sequence_model/timemachine.txt'
+File='./dp/Mynet/RNN/Sequence_model/timemachine.txt'
 
 if not os.path.exists(File):
     urllib.request.urlretrieve(URL,File)
@@ -38,3 +40,11 @@ def count_corpus(tokens):
 
 test_tokens = [['hello', 'world'], ['hello', 'python']]
 print(count_corpus(test_tokens))
+
+vocab = Vocab(tokens)
+print(list(vocab.token_to_idx.items())[:20])
+
+for i in [0, 10]:
+    print('文本:', tokens[i])
+    print('索引:', vocab[tokens[i]])
+
