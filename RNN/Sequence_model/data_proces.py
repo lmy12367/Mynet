@@ -56,3 +56,6 @@ def load_corpus_time_machine(max_tokens=-1):
     if max_tokens > 0:
         corpus = corpus[:max_tokens]
     return corpus, vocab
+
+corpus, vocab = load_corpus_time_machine()
+print(len(corpus), len(vocab))
