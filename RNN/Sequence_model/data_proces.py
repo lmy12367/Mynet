@@ -48,3 +48,11 @@ for i in [0, 10]:
     print('文本:', tokens[i])
     print('索引:', vocab[tokens[i]])
 
+def load_corpus_time_machine(max_tokens=-1):
+    lines = read_time_machine()
+    tokens = tokenize(lines, 'char')
+    vocab = Vocab(tokens)
+    corpus = [vocab[token] for line in tokens for token in line]
+    if max_tokens > 0:
+        corpus = corpus[:max_tokens]
+    return corpus, vocab
